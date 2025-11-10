@@ -34,9 +34,9 @@ push_to_quay: &push_to_quay
     # ${CIRCLE_SHA1} = circleci env variable takes git hash commit
     command: |
       # tags as: "main", so you can use image:main in k8s cluster config to get latest image
-      docker tag python:3.12-slim quay.io/ym26/nginx-flask-backend:${CIRCLE_BRANCH//\//_}
+      docker tag nginx-flask-backend quay.io/ym26/nginx-flask-backend:${CIRCLE_BRANCH//\//_}
       # tags as: main-<hash>, so you can restore older images
-      docker tag python:3.12-slim quay.io/ym26/nginx-flask-backend:${CIRCLE_BRANCH//\//_}-${CIRCLE_SHA1}
+      docker tag nginx-flask-backend quay.io/ym26/nginx-flask-backend:${CIRCLE_BRANCH//\//_}-${CIRCLE_SHA1}
       # push tag as main to quay
       docker push quay.io/ym26/nginx-flask-backend:${CIRCLE_BRANCH//\//_}
       # push tag as main-<hash> to quay
