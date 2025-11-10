@@ -4,8 +4,7 @@ import os
 
 app = Flask(__name__)
 
-#TURNSTILE_SECRET = os.environ.get("TURNSTILE_SECRET")
-TURNSTILE_SECRET = '0x4AAAAAAB-xfe9VYZj4n1lGBjqLQuuWlyg'
+TURNSTILE_SECRET = os.environ.get("TURNSTILE_SECRET")
 
 @app.route("/verify", methods=["POST"])
 def verify():
