@@ -1,0 +1,73 @@
+# declare anchor function &docker-defaults
+docker-defaults: &docker-defaults
+  docker:
+    # docker file with docker-compose installed
+    #- image: quay.io/nyulibraries/circleci_docker:19.03.13-dc-1.27.4-0
+    - image: quay.io/nyulibraries/circleci_docker:20.10.6-dc-1.29.1-0
+  working_directory: ~/app
+
+
+
+# declare anchor function &build_docker
+build_docker: &build_docker
+  run:
+    name: Build docker image
+    command: docker-compose build
+
+
+
+# declare anchor function &auth_quay
+auth_quay: &auth_quay
+  run:
+    name: Authenticate to Quay
+    command: |
+      docker login -u="$QUAY_USERNAME" -p="$QUAY_PASSWORD" quay.io
+
+
+
+# declare anchor function &push_to_quay
+push_to_quay: &push_to_quay
+  run:
+    name: Push docker image to quay
+    # docker tag takes image from Dockerfile and gives it custom tag to push to quay
+    # ${CIRCLE_BRANCH//\//_} = circleci env variable with regex to repace forward slash with underscore
+    # ${CIRCLE_SHA1} = circleci env variable takes git hash commit
+    command: |
+      # tags as: "main", so you can use image:main in k8s cluster config to get latest image
+      docker tag nginx:latest quay.io/ym26/nginx-green:${CIRCLE_BRANCH//\//_}
+      # tags as: main-<hash>, so you can restore older images
+      docker tag nginx:latest quay.io/ym26/nginx-green:${CIRCLE_BRANCH//\//_}-${CIRCLE_SHA1}
+      # push tag as main to quay
+      docker push quay.io/ym26/nginx-green:${CIRCLE_BRANCH//\//_}
+      # push tag as main-<hash> to quay
+      docker push quay.io/ym26/nginx-green:${CIRCLE_BRANCH//\//_}-${CIRCLE_SHA1}
+
+
+
+version: 2.1
+jobs:
+  # actual job to run
+  build-my-app:
+    # alias that calls anchor &docker-defaults. (e.g function call)
+    <<: *docker-defaults
+    steps:
+      # checks out github code
+      - checkout
+      # sets up docker daemon to run docker commands
+      - setup_remote_docker
+      # call build_docker function (e.g: &build_docker)
+      - <<: *build_docker
+      # call auth_quay function (e.g: &auth_quay)
+      - <<: *auth_quay
+      # call push_to_quay function (e.g: &push_to_quay)
+      - <<: *push_to_quay
+
+
+  
+
+workflows:
+  version: 2.1
+  build:
+    jobs:
+      # name of the job to reference run
+      - build-my-app
